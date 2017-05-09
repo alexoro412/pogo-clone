@@ -1,0 +1,25 @@
+extends layout
+
+block content
+  - var messages = getMessages()
+  .column
+    if messages.error
+      each msg in messages.error
+        .notification.is-danger.is-4.is-offset-4= msg
+  form(action='/team_select', method='POST')
+    .columns.is-multiline
+      .column.is-4
+        p.notification.is-warning.has-text-centered
+          input(type='radio', name='team', value='yellow') 
+          span Yellow
+      .column.is-4
+        p.notification.is-danger.has-text-centered
+          input(type='radio', name='team', value='red') 
+          span Red
+      .column.is-4
+        p.notification.is-info.has-text-centered
+          input(type='radio', name='team', value='blue') 
+          span Blue
+      .column.is-4.is-offset-4
+        p.notification.has-text-centered
+          input.button.is-primary(type='submit', value='Join')

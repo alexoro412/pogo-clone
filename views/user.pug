@@ -1,0 +1,23 @@
+extends layout
+
+block content
+  - var messages = getMessages()
+  style.
+    #map {
+      height: 100vh;
+    }
+    #topbar{
+      position:fixed;
+      top:0;
+      width: 100%;
+    }
+  #topbar.columns(style="z-index:40;")
+    if messages.error
+      each msg in messages.error
+        .column.notification.is-danger.is-4.is-offset-4= msg
+    if messages.notify
+      each msg in messages.notify
+        .notification.is-primary.is-8= msg
+  #map.is-12
+  script(src='scripts/game.js')
+  script(async, defer, src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBWp7YbaZVDh-8tLw1hLm-osy1arHdq0i0&callback=initMap")
