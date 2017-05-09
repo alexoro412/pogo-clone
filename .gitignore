@@ -1,2 +1,4 @@
 redis/
 node_modules/
+server.*
+dump.rdb
