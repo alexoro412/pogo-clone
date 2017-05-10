@@ -9,6 +9,7 @@ var ensureLoggedIn = require('connect-ensure-login').ensureLoggedIn();
 var flash = require('express-flash-messages')
 var https = require('https');
 var fs = require('fs');
+var ioServer = require('socket.io');
 
 var httpsOptions = {
   key: fs.readFileSync('server.key'),
@@ -42,7 +43,9 @@ passport.deserializeUser(function(user, done) {
 });
 
 var app = express();
-var router = require('./routes');
+var routerObject = require('./routes');
+var router = routerObject.router;
+var socketEmitter = routerObject.socketEmitter;
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
@@ -65,7 +68,18 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', router);
 
-var server = https.createServer(httpsOptions, app).listen(3000, function(){
+var server = https.createServer(httpsOptions, app);
+
+var io = new ioServer(server);
+io.on('connection', function(socket){
+
+});
+
+socketEmitter.on('del poke', function(redis_poke_id){
+  io.emit('del poke', {id: redis_poke_id});
+});
+
+server.listen(3000, function(){
   console.log("server listening on :3000");
 })
 

@@ -1,0 +1,11 @@
+// to add a Pokemon
+GEOADD Pokemon 10 10 charmander:dg2
+ZADD pokeExpire 1494368068 charmander:dg2
+
+// to expire a pokemon
+TIME // store this for checking
+ZRANGEBYSCORE pokeExpire 0 $time // store this a list of pokemons
+
+ZREMRANGEBYSCORE pokeExpire 0 $time
+ZREM Pokemon [$list pokemon to despawn]
+

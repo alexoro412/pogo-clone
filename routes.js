@@ -7,6 +7,9 @@ var mongoose = require('mongoose');
 var Mon = require('./mon');
 var User = require('./user');
 var Species = require('./species');
+var redis = require('./redis');
+const EventEmitter = require('events');
+const socketEmitter = new EventEmitter();
 
 dotenv.load();
 
@@ -65,6 +68,8 @@ function ensureHasTeam(req, res, next) {
         req.user.team = user.team;
         return next();
       } else {
+        req.flash('error', 'You need to select a team');
+        // TODO add flash messages to team_select
         return res.redirect('/team_select');
       }
     })
@@ -82,7 +87,7 @@ router.get('/catalog', function(req, res) {
   });
 });
 
-router.get('/geo/pokemon', function(req, res) {
+router.get('/geo/pokemon', ensureLoggedIn, ensureHasTeam, function(req, res) {
   var lat = parseFloat(req.query.lat);
   var lng = parseFloat(req.query.lng);
   if (typeof lat != 'number' || typeof lng != 'number') {
@@ -90,38 +95,33 @@ router.get('/geo/pokemon', function(req, res) {
       err: 'malformed'
     });
   }
-
-  return res.json([{
-      name: 'bulbasaur',
-      id: 'dg3',
-      lat: 39.633555,
-      lng: -104.939469
-    },
-    {
-      name: 'bulbasaur',
-      id: 'dg4',
-      lat: 39.633378,
-      lng: -104.939479
-    }
-  ])
+  redis.pokemonWithinRadius(lat, lng, 3, function(pokemon) {
+    return res.json(pokemon);
+  });
 });
 
-router.post('/poke/battle', function(req, res){
-  var poke_id = req.body.poke_id;
+router.post('/poke/battle', ensureLoggedIn, ensureHasTeam, function(req, res) {
+  var redis_poke_id = req.body.redis_poke_id;
+  var poke_species = req.body.poke_species;
   var user_id = req.user.id;
+  // TODO check if `pokemonExists`
+  redis.despawnPokemon(redis_poke_id);
+  socketEmitter.emit('del poke', redis_poke_id);
   var pokemon = new Mon();
-  pokemon.name = 'bulbasaur';
+  pokemon.name = poke_species;
   pokemon.attack = 4;
-  console.log(user_id);
-  pokemon.save(function(){
-    User.findOne({auth_zero_id: user_id}, function(err, user){
+  pokemon.save(function() {
+    User.findOne({
+      auth_zero_id: user_id
+    }, function(err, user) {
       console.log(user);
-      if(err) throw err;
+      if (err) throw err;
       user.mons.push(pokemon._id);
       user.save();
-      // TODO despawn pokemon
       // TODO emit websocket reset
-      return res.json({msg: 'success'});
+      return res.json({
+        msg: 'success'
+      });
     });
   });
 });
@@ -131,7 +131,6 @@ router.get('/team_select', ensureLoggedIn, function(req, res) {
 });
 
 router.get('/game', ensureLoggedIn, ensureHasTeam, function(req, res) {
-  req.flash('error', 'Location is difficult')
   return res.render('user', {
     user: req.user
   });
@@ -159,4 +158,7 @@ router.post('/team_select', ensureLoggedIn, function(req, res) {
   }
 });
 
-module.exports = router;
+module.exports = {
+  router: router,
+  socketEmitter: socketEmitter
+};

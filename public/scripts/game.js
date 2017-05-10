@@ -1,5 +1,10 @@
 var map;
 var userPos;
+var pokemon_cache = {};
+var socket = io('https://localhost:3000', {secure:true});
+socket.on('del poke', function(data){
+  despawnPokemon(data.id.split(':')[1]);
+});
 function initMap(){
   console.log('here');
   getLocation(function(pos){
@@ -31,23 +36,25 @@ function initMap(){
     var pokeRequest = new XMLHttpRequest();
     pokeRequest.onreadystatechange = function(){
       if(this.readyState == 4 && this.status == 200){
-        pokemons = JSON.parse(this.response);
+        let pokemons = JSON.parse(this.response);
         if(pokemons.err && pokemons.err == 'malformed'){
           console.log('error');
         }else{
           for(let pokemon of pokemons){
-            let pokeMarker = new google.maps.Marker({
-              position: {lat: parseFloat(pokemon.lat), lng: pokemon.lng},
+            let split_title = pokemon.name.split(':');
+            let species = split_title[0];
+            let redis_poke_id = split_title[1];
+            pokemon_cache[redis_poke_id] = new google.maps.Marker({
+              position: {lat: parseFloat(pokemon.lat), lng: parseFloat(pokemon.lng)},
               map: map,
               icon: {
-                url: '/images/'+pokemon.name+'.png',
+                url: '/images/'+ species +'.png',
                 scaledSize: new google.maps.Size(80,80)
               },
-              title: pokemon.name
+              title: species
             });
-            pokeMarker.addListener('click', function(evt){
-              pokeMarker.setMap(null);
-              pokeMarker = null;
+            ;
+            pokemon_cache[redis_poke_id].addListener('click', function(evt){
               var battleRequest = new XMLHttpRequest();
               battleRequest.open('POST', '/poke/battle')
               battleRequest.onreadystatechange = function(){
@@ -57,7 +64,7 @@ function initMap(){
                 }
               };
               battleRequest.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-              battleRequest.send('poke_id=' + pokemon.id);
+              battleRequest.send('redis_poke_id=' + pokemon.name + "&poke_species=" + species);
             });
           }
         }
@@ -66,14 +73,19 @@ function initMap(){
     pokeRequest.open("GET", "/geo/pokemon?lat=" + userPos.lat + "&lng=" + userPos.lng, true);
     pokeRequest.send();
 
-    userMarker.addListener('click', function(evt){
-      alert('you pressed the user!');
-    })
+    // userMarker.addListener('click', function(evt){
+    //   alert('you pressed the user!');
+    // })
     map.addListener('center_changed', function(evt){
       /*map.panTo(userMarker.position);*/
     });
     console.log("finally");
   });
+}
+
+function despawnPokemon(redis_poke_id){
+  pokemon_cache[redis_poke_id].setMap(null);
+  pokemon_cache[redis_poke_id] = null;
 }
 
 function getLocation(cb) {

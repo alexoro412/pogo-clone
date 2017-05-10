@@ -1,4 +1,5 @@
 redis/
 node_modules/
 server.*
+server.key.org
 dump.rdb
