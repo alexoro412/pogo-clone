@@ -1,0 +1,109 @@
+extends layout
+
+block content
+  - var messages = getMessages()
+  style.
+    #map {
+      height: 100vh;
+    }
+    #topbar{
+      position:fixed;
+      top:0;
+    }
+    #full-notify {
+      background-color: #bbbbbb;
+    }
+    #release-confirm {
+      background-color: rgba(120,120,120,0.5);
+    }
+    #pokedex{
+      position:fixed;
+      top:0;
+      display:none;
+      max-height: 100vh;
+      overflow: scroll;
+      /*overflow-y:scroll;*/
+    }
+    #pokedex-body{
+      /*overflow-y:scroll;*/
+      
+    }
+    .table{
+      margin-bottom:0;
+    }
+    .close-overlay{
+      width:100%;
+      background-color: #777777;
+      height:10vh;
+      text-align: center;
+      line-height:10vh;
+    }
+    .fab {
+      position:fixed;
+      top:5px;
+      right:5px;
+      z-index:2;
+    }
+    .pokeballs {
+      float:right;
+    }
+    tr > td > img {
+      max-width: 240px;
+    }
+  #map.is-12
+  .fab
+    button#show-pokedex.button.is-primary Pokedex
+    br
+    br
+    span#pokeballs.tag.is-info.pokeballs 0 Pokeballs
+  .columns
+    #topbar.column.is-2(style="z-index:40;")
+      if messages.error
+        each msg in messages.error
+          .notification.is-danger= msg
+      if messages.notify
+        each msg in messages.notify
+          .notification.is-primary= msg
+  #full-notify.modal
+    div#full-notify-content.modal-content
+      article.media
+        figure.media-left 
+          p.image.is-64x64 
+            img
+        .media-content.notification
+          .content 
+            p
+              big
+                strong 
+    div#full-notify-close.modal-close
+  #release-confirm.modal
+    div.modal-content
+      .card 
+        .card-content
+          .title Are you sure you want to delete ?
+        footer.card-footer
+          a#release-cancel.card-footer-item Cancel
+          a#release-release.card-footer-item.is-danger Release
+  #pokestop.modal
+    div.modal-content 
+      .card
+        .card-content 
+          .title Pokestop
+        footer.card-footer 
+          a#pokestop-cancel.card-footer-item Close
+          a#pokestop-use.card-footer-item.is-danger Get Items
+  #pokedex.is-overlay
+    button#hide-pokedex.column.close-overlay.button.is-light.is-big Return to Game
+    table#pokedex-table.table
+      thead
+        tr
+          th(colspan='4')
+            strong Your Pokemon
+        tr
+          th Icon 
+          th#nameHeader Name 
+          th#attackHeader Attack
+          th Release
+      tbody#pokedex-body
+  script(src='scripts/game.js')
+  script(async, defer, src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBWp7YbaZVDh-8tLw1hLm-osy1arHdq0i0&callback=initMap")

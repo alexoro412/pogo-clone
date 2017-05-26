@@ -46,6 +46,7 @@ var app = express();
 var routerObject = require('./routes');
 var router = routerObject.router;
 var socketEmitter = routerObject.socketEmitter;
+var redisEmitter = routerObject.redisEmitter;
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
@@ -75,11 +76,16 @@ io.on('connection', function(socket){
 
 });
 
-socketEmitter.on('del poke', function(redis_poke_id){
-  io.emit('del poke', {id: redis_poke_id});
+redisEmitter.on('despawn pokemon', function(redis_poke_id){
+  io.emit('despawn poke', {id: redis_poke_id});
 });
 
-server.listen(3000, function(){
+redisEmitter.on('spawn poke', function(redis_poke_id, lat, lng){
+  // io.emit('spawn poke', {id: redis_poke_id, lat: lat, lng: lng})
+});
+
+server.listen(3000, function(err){
+  console.log(err);
   console.log("server listening on :3000");
 })
 
